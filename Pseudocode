@@ -39,9 +39,12 @@ WHILE blocks_collected < 2:
 
     ELSE IF SHAPE == SEARCHING:
         move forward and follow line
-        check for black boundary line → if found, reverse and turn
-        check for obstacle → avoid if necessary
-        check for red/yellow block → if found, SHAPE = PICKING
+        if check for black boundary line == found:
+        reverse and turn
+        if check for obstacle == found:
+        avoid if necessary
+        if check for red/yellow block == found:
+        SHAPE = PICKING
 
     ELSE IF SHAPE == PICKING:
         stop
