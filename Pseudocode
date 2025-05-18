@@ -1,0 +1,89 @@
+# Pseudocode
+## Psuedcode.1
+
+```
+BEGIN on touch sensor press
+FIX blocks_collected = 0
+
+WHILE blocks_collected < 2:
+    IF black line detected:
+        stop
+        reverse slightly
+        turn to stay in bounds
+    ELSE IF obstacle detected:
+        avoid obstacle (reverse and turn)
+    ELSE:
+        follow light area (line following using reflection)
+
+    IF red or yellow block detected:
+        stop
+        pick up block
+        move to corresponding drop-off location
+        drop block
+        blocks_collected += 1
+
+    return to exploration mode
+
+END
+```
+
+## Psuedocode.2
+```
+SHAPE = WAITING
+blocks_collected = 0
+
+WHILE blocks_collected < 2:
+    IF SHAPE == WAITING:
+        wait for touch sensor press
+        SHAPE = SEARCHING
+
+    ELSE IF SHAPE == SEARCHING:
+        move forward and follow line
+        check for black boundary line → if found, reverse and turn
+        check for obstacle → avoid if necessary
+        check for red/yellow block → if found, SHAPE = PICKING
+
+    ELSE IF SHAPE == PICKING:
+        stop
+        pick up block
+        SHAPE = DELIVERING
+
+    ELSE IF SHAPE == DELIVERING:
+        go to drop-off location based on block color
+        drop block
+        blocks_collected += 1
+        SHAPE = SEARCHING
+
+END
+```
+## Psuedocode.3
+```
+MAIN:
+    wait_for_start()
+    REPEAT 2 TIMES:
+        color = search_for_block_within_bounds()
+        pick_up_block()
+        drive_to_drop_zone(color)
+        release_block()
+
+FUNCTION wait_for_start():
+    wait until touch sensor is pressed
+
+FUNCTION search_for_block_within_bounds():
+    WHILE true:
+        drive forward and line-follow
+        IF boundary line detected THEN reverse and turn
+        IF obstacle detected THEN avoid
+        IF red/yellow block detected THEN stop and return color
+
+FUNCTION pick_up_block():
+    open gripper
+    close gripper
+
+FUNCTION drive_to_drop_zone(color):
+    drive to coordinates assigned to color
+
+FUNCTION release_block():
+    open gripper
+    reverse slightly
+```
