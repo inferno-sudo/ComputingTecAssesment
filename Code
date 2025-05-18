@@ -1,0 +1,92 @@
+# Import necessary EV3 devices and tools from the pybricks module
+from pybricks.ev3devices import Motor, ColorSensor, UltrasonicSensor, TouchSensor
+from pybricks.parameters import Port, Color, Stop
+from pybricks.robotics import DriveBase
+from pybricks.tools import wait
+
+# Set up motors for driving (B & C) and gripper/lifter (A)
+left_motor = Motor(Port.B)
+right_motor = Motor(Port.C)
+gripper_motor = Motor(Port.A)
+
+# Set up sensors
+color_sensor = ColorSensor(Port.S3)           # Used for line following and block color detection
+ultrasonic_sensor = UltrasonicSensor(Port.S1) # Used to detect nearby obstacles
+touch_sensor = TouchSensor(Port.S2)           # Starts the program when pressed
+
+# Set up the drive base using wheel size and axle track
+robot = DriveBase(left_motor, right_motor, wheel_diameter=56, axle_track=114)
+
+# Define which colors to collect
+TARGET_COLORS = [Color.RED, Color.YELLOW]
+
+# Pre-defined drop-off coordinates for the red and yellow blocks
+DROP_OFF_LOCATIONS = {
+    Color.RED: (300, 0),
+    Color.YELLOW: (0, 300)
+}
+
+# This function keeps the robot inside the black-lined border of the arena
+def stay_within_bounds():
+    if color_sensor.color() == Color.BLACK:
+        robot.stop()            # Stop if black line is detected (arena boundary)
+        robot.straight(-50)     # Move backward slightly
+        robot.turn(90)          # Turn to stay within the boundary
+
+# This function helps the robot avoid obstacles using the ultrasonic sensor
+def avoid_obstacles():
+    if ultrasonic_sensor.distance() < 100:  # If an object is less than 10 cm away
+        robot.stop()
+        robot.straight(-50)  # Back up
+        robot.turn(90)       # Turn to avoid the obstacle
+
+# This function drives the robot around to search for a red or yellow block
+def find_block():
+    while True:
+        stay_within_bounds()      # Ensure robot stays inside arena
+        avoid_obstacles()         # Check for and avoid obstacles
+
+        # Basic line-following behavior using reflected light
+        reflection = color_sensor.reflection()
+        turn_rate = (50 - reflection) * 1.5
+        robot.drive(100, turn_rate)
+
+        # Check if block is detected
+        color = color_sensor.color()
+        if color in TARGET_COLORS:
+            robot.stop()
+            return color  # Return the detected block color
+
+# This function operates the gripper to grab a block
+def pick_up_block():
+    gripper_motor.run_angle(200, -90)  # Open gripper
+    wait(500)
+    gripper_motor.run_angle(200, 180)  # Close gripper to pick up
+    wait(500)
+
+# This function opens the gripper to release the block
+def drop_block():
+    gripper_motor.run_angle(200, -180)  # Open to drop the block
+    wait(500)
+
+# This function drives the robot to a specific coordinate (simplified logic)
+def go_to_location(x, y):
+    robot.straight(x)  # Move forward x mm
+    robot.turn(90)     # Turn 90 degrees
+    robot.straight(y)  # Move forward y mm
+
+# --- Main program starts here ---
+
+# Wait until touch sensor is pressed before starting
+print("Press touch sensor to start.")
+while not touch_sensor.pressed():
+    wait(10)
+
+# Repeat twice to collect both red and yellow blocks
+for _ in range(2):
+    color = find_block()          # Locate a block and get its color
+    pick_up_block()              # Grab the block
+    x, y = DROP_OFF_LOCATIONS[color]  # Get drop-off coordinates
+    go_to_location(x, y)         # Move to the location
+    drop_block()                 # Release the block
+    robot.straight(-100)         # Reverse before searching again
