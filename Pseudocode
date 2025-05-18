@@ -75,9 +75,12 @@ FUNCTION wait_for_start():
 FUNCTION search_for_block_within_bounds():
     WHILE true:
         drive forward and line-follow
-        IF boundary line detected THEN reverse and turn
-        IF obstacle detected THEN avoid
-        IF red/yellow block detected THEN stop and return color
+        IF boundary line detected:
+        reverse and turn
+        IF obstacle detected:
+        avoid
+        IF red/yellow block detected:
+        stop and return color
 
 FUNCTION pick_up_block():
     open gripper
@@ -89,4 +92,5 @@ FUNCTION drive_to_drop_zone(color):
 FUNCTION release_block():
     open gripper
     reverse slightly
+END
 ```
