@@ -1,0 +1,379 @@
+# Code Documentation
+## By Ashwin, Will, Karna and Quintus
+
+# Testing
+
+## Test 1
+Trying to understand how to code the light sensors
+### Objective
+To make sure the light sensors are working and turned on
+
+``` 
+#python
+
+# Gathering the python libraries for the ev3 brick  
+from pybricks.hubs import EV3Brick
+from pybricks.parameters import Color
+import time
+
+# Initialize the EV3 Brick
+ev3 = EV3Brick()
+
+# Turn on the light with a specific color
+ev3.light.on(Color.RED)
+
+# Keep the light on for 5 seconds
+time.sleep(5)
+
+# Turn off the light
+ev3.light.off()
+```
+
+### The results
+The code ran successfully and our first test was a huge success,
+now that we were able able to understand how the light sensors worked we could utilize them in the final design.
+
+## Test 2
+Make basic functions like walking and turning
+
+### Objective
+To make sure the robot is able to move in basic ways very easily
+
+``` 
+# Gathering the python libraries for the ev3 brick  
+from pybricks.hubs import EV3Brick
+from pybricks.ev3devices import Motor
+from pybricks.parameters import Port
+from pybricks.robotics import DriveBase
+
+# Initialize the EV3 Brick.
+ev3 = EV3Brick()
+
+# Initialize the motors.
+left_motor = Motor(Port.B)
+right_motor = Motor(Port.C)
+
+# Initialize the drive base.
+robot = DriveBase(left_motor, right_motor, wheel_diameter=55.5, axle_track=104)
+
+# Go forward and backwards for one meter and then beep.
+robot.straight(1000)
+ev3.speaker.beep()
+
+robot.straight(-1000)
+ev3.speaker.beep()
+
+# Turn clockwise by 360 degrees and back again and then beep.
+robot.turn(360)
+ev3.speaker.beep()
+
+robot.turn(-360)
+ev3.speaker.beep()
+```
+
+### The results
+The code also ran successfully, we verified this after the robot moved exactly for a metre and back using a ruler, and it also turned for 360 degrees as well.
+
+## Test 3
+To code the sensors that follow a line
+
+### Objective
+Make sure that the robot is inside of the black line in the board.
+
+``` from pybricks.ev3devices import Motor, ColorSensor
+from pybricks.parameters import Port
+from pybricks.tools import wait
+from pybricks.robotics import DriveBase
+
+# Initialize the motors.
+left_motor = Motor(Port.B)
+right_motor = Motor(Port.C)
+
+# Initialize the color sensor.
+line_sensor = ColorSensor(Port.S3)
+
+# Initialize the drive base.
+robot = DriveBase(left_motor, right_motor, wheel_diameter=55.5, axle_track=104)
+
+# Calculate the light threshold. Choose values based on your measurements.
+BLACK = 9
+WHITE = 85
+threshold = (BLACK + WHITE) / 2
+
+# Set the drive speed at 100 millimeters per second.
+DRIVE_SPEED = 100
+
+# Set the gain of the proportional line controller. This means that for every
+# percentage point of light deviating from the threshold, we set the turn
+# rate of the drivebase to 1.2 degrees per second.
+
+# For example, if the light value deviates from the threshold by 10, the robot
+# steers at 10*1.2 = 12 degrees per second.
+PROPORTIONAL_GAIN = 1.2
+
+# Start following the line endlessly.
+while True:
+    # Calculate the deviation from the threshold.
+    deviation = line_sensor.reflection() - threshold
+
+    # Calculate the turn rate.
+    turn_rate = PROPORTIONAL_GAIN * deviation
+
+    # Set the drive base speed and turn rate.
+    robot.drive(DRIVE_SPEED, turn_rate)
+
+    # You can wait for a short time or do other things in this loop.
+    wait(10)
+```
+
+### The results
+For this test we faced our first setback as the code did not work well.
+After the robot stayed inside of the line one time, then it just wondered elsewhere not inside of the black line.
+## Test 4
+Trying to make the robot pick up the blocks
+
+### Objective
+Make the robots be able to pick the correct blocks effiecncently and effectively and stays inside of the black line
+
+```
+# Gathering all of the pybricks mlibraries for the ev3 robot
+from pybricks.ev3devices import Motor, ColorSensor, UltrasonicSensor, TouchSensor
+from pybricks.parameters import Port, Color
+from pybricks.robotics import DriveBase
+from pybricks.tools import wait
+
+# Initialize the motors
+left_motor = Motor(Port.B)
+right_motor = Motor(Port.C)
+# Controls the gripper to grab blocks
+gripper_motor = Motor(Port.A)  
+
+# Initialize sensors
+# Sorts out the block color and boundary lines
+color_sensor = ColorSensor(Port.S3)    
+# Finds obstacles       
+ultrasonic_sensor = UltrasonicSensor(Port.S1) 
+# After being touched the program starts
+touch_sensor = TouchSensor(Port.S2)          
+# Initialize drive base
+robot = DriveBase(left_motor, right_motor, wheel_diameter=56, axle_track=114)
+
+
+# The colours of the blocks to pick up
+TARGET_COLORS = [Color.RED, Color.YELLOW]  
+
+# The fucntion to make the robot stay inside of the black line
+def stay_within_bounds():
+    if color_sensor.color() == Color.BLACK:
+        robot.stop()
+        # Goes back
+        robot.straight(-50)   
+        # Turns
+        robot.turn(90)        
+
+# The Function of avoiding obstacles
+def avoid_obstacles():
+    if ultrasonic_sensor.distance() < 100:  
+       
+        robot.stop()
+        robot.straight(-50)
+        robot.turn(90)
+
+# Gripping function
+def pick_up_block():
+    # Open the gripper
+    gripper_motor.run_angle(200, -90)  
+    wait(500)
+    # Close gripper the grab
+    gripper_motor.run_angle(200, 180)  
+    wait(500)
+
+# Defining the search function
+def search_and_pick_block():
+    while True:
+        stay_within_bounds()
+        avoid_obstacles()
+
+        # Driving
+        reflection = color_sensor.reflection()
+        turn_rate = (50 - reflection) * 1.5
+        robot.drive(100, turn_rate)
+
+        detected_color = color_sensor.color()
+
+        if detected_color in TARGET_COLORS:
+            robot.stop()
+            print("Found a", detected_color, "block!")
+            pick_up_block()
+            break
+
+print("Press touch sensor to start...")
+while not touch_sensor.pressed():
+    wait(10)
+
+
+search_and_pick_block()
+
+```
+### The results
+We were not able to test this code but it would be very likely that this code would have succeded 
+as we consulted with Mr.Groom about many of the functions inside of this code
+## Test 5
+The Final code
+
+### Objective
+Make sure that the LEGO EV3 robot autonomously collects and transports a red LEGO block and a 
+yellow LEGO block to designated positions while avoiding all other blocks.
+
+Incorporating at least two different sensors for navigation and object detection.
+Whether it is the colour/light sensor to detect block colours or follow lines, the touch sensor to identify obstacles, 
+confirm contact with blocks or start the demonstration, and the ultrasonic sensor to measure distances to surrounding objects. 
+Additionally, integrating an extra motor to construct and operate an end effector such as a gripper or lifter, or simply add
+some lego pieces for handling the blocks. However, removing the additional lego between classes is mandatory.
+
+``` # Getting the micropython libaries needed for the algorithm
+from pybricks.ev3devices import Motor, ColorSensor, UltrasonicSensor, TouchSensor
+from pybricks.parameters import Port, Color, Stop
+from pybricks.robotics import DriveBase
+from pybricks.tools import wait
+
+#-- Initializing the Ev3 robot --
+
+# Initialize the motors, (Intialize means to set up)
+left_motor = Motor(Port.B)
+right_motor = Motor(Port.C)
+gripper_motor = Motor(Port.A)
+
+#Initialize the sensors
+# For line following and colour detection
+color_sensor = ColorSensor(Port.S3)
+# To sense other obstacles in the way           
+ultrasonic_sensor = UltrasonicSensor(Port.S1)
+# Boots the program up 
+touch_sensor = TouchSensor(Port.S2)           
+
+# Initialize the drive base
+robot = DriveBase(left_motor, right_motor, wheel_diameter=56, axle_track=114)
+
+# -- Setting up the colours to detect for --
+TARGET_COLORS = [Color.RED, Color.YELLOW]
+
+# Drop off locations for the robot
+DROP_OFF_LOCATIONS = {
+    Color.RED: (300, 0),
+    Color.YELLOW: (0, 300)
+}
+
+# -- Keeps the robot iniside of the black border --
+def stay_within_bounds():
+    if color_sensor.color() == Color.BLACK:
+        # Stops when it is at the black line
+        robot.stop()     
+        # Goes back       
+        robot.straight(-50) 
+        # Turns to then start the alogrithm again   
+        robot.turn(90)         
+
+# -- Code for the robot to avoid obstacles --
+def avoid_obstacles():
+    # Senses an obstacle less than 10 cm
+    if ultrasonic_sensor.distance() < 100: 
+        robot.stop()
+        # Goes back
+        robot.straight(-50)
+        # Turns to start the algorithm again 
+        robot.turn(90)       
+
+# -- The code for the robot to search for the blocks --
+def find_block():
+    while True:
+        # Makes the robot stay inside of the border
+        stay_within_bounds()
+        # Makes the robot detect and stay away from obstacles      
+        avoid_obstacles()         
+
+        # Line following using the reflection of the light
+        reflection = color_sensor.reflection()
+        turn_rate = (50 - reflection) * 1.5
+        robot.drive(100, turn_rate)
+
+        # Firgures out if the clour is found
+        color = color_sensor.color()
+        if color in TARGET_COLORS:
+            robot.stop()
+            # Gives the deteced block back
+            return color  
+        
+# -- Makes the gripper grab the block --
+def pick_up_block():
+    # Opens the grippere
+    gripper_motor.run_angle(200, -90) 
+    wait(500)
+    # Closes the gripper to pick up the block
+    gripper_motor.run_angle(200, 180)  
+    wait(500)
+
+# -- Opens the gripper again to drop the block --
+def drop_block():
+    # Where the gripper opens up
+    gripper_motor.run_angle(200, -180) 
+    wait(500)
+
+# -- Drives the robot to an unspecified location --
+def go_to_location(x, y):
+    robot.straight(x)  
+    robot.turn(90)     
+    robot.straight(y)  
+
+
+# -- Waits for the touch sensor to start --
+print("Press touch sensor to start.")
+while not touch_sensor.pressed():
+    wait(10)
+
+# -- A nested loop for the code to run effeciently --
+for _ in range(2):
+    # Finds a block
+    color = find_block()
+    # Picks up the block
+    pick_up_block()  
+    # finds the dropping zone            
+    x, y = DROP_OFF_LOCATIONS[color] 
+    # Goes to the dropping zone
+    go_to_location(x, y)
+    # Drops the block in the dropping zone       
+    drop_block()              
+    robot.straight(-100)         
+
+```
+
+### The results
+Again it was not possible to test this and this code could have possbily failed,
+as the robot maybe could not handle all of the things that it was coded into doing. 
+## Evaluation
+This project has really opened our eyes into making some crucial decisions for the next
+time we do this type of project. One of which was to ask for more help with other students
+so that we could know the basis of what we needed to work on. Another is using time more 
+effiecntly and getting the more important tasks like the code for example tested and done before any other aspects.
+Through this project we were able to learn a lot and develop more skills in problem solving
+and critical thinking and was a great journey that we were all grateful to be in.
+
+### Sucesses
+- Asking for help
+- Most of our code worked
+- Easy to understand how to code the robot
+- Finding tutorials
+
+### Challenges/Issues
+- Testing the robot
+- Getting the cables for the robot
+- Knowing what gears we needed for the robot
+- Trying to explain the code to the team 
+- Making the robot work
+
+# Conclusion
+Our goal was to create an Ev3 robot that was able to autonomously collect and transport a red 
+LEGO block and a yellow LEGO block to designated positions while avoiding all other blocks.
+I believe that we have created this exact product to a qaulity standard, though it is not fully
+verified and proven that it will in fact proceed to doing the tasks that it was coded to do, 
+it is still great that we were able to understand and infer what would or could have happened.
