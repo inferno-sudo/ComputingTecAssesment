@@ -1,92 +1,113 @@
-# Import necessary EV3 devices and tools from the pybricks module
+# Getting the micropython libaries needed for the algorithm
 from pybricks.ev3devices import Motor, ColorSensor, UltrasonicSensor, TouchSensor
 from pybricks.parameters import Port, Color, Stop
 from pybricks.robotics import DriveBase
 from pybricks.tools import wait
 
-# Set up motors for driving (B & C) and gripper/lifter (A)
+# -- Initializing the Ev3 robot --
+
+# Initialize the motors, (Intialize means to set up)
 left_motor = Motor(Port.B)
 right_motor = Motor(Port.C)
 gripper_motor = Motor(Port.A)
 
-# Set up sensors
-color_sensor = ColorSensor(Port.S3)           # Used for line following and block color detection
-ultrasonic_sensor = UltrasonicSensor(Port.S1) # Used to detect nearby obstacles
-touch_sensor = TouchSensor(Port.S2)           # Starts the program when pressed
+#Initialize the sensors
+# For line following and colour detection
+color_sensor = ColorSensor(Port.S3)
+# To sense other obstacles in the way           
+ultrasonic_sensor = UltrasonicSensor(Port.S1)
+# Boots the program up 
+touch_sensor = TouchSensor(Port.S2)           
 
-# Set up the drive base using wheel size and axle track
+# Initialize the drive base
 robot = DriveBase(left_motor, right_motor, wheel_diameter=56, axle_track=114)
 
-# Define which colors to collect
+# -- Setting up the colours to detect for --
 TARGET_COLORS = [Color.RED, Color.YELLOW]
 
-# Pre-defined drop-off coordinates for the red and yellow blocks
+# Drop off locations for the robot
 DROP_OFF_LOCATIONS = {
     Color.RED: (300, 0),
     Color.YELLOW: (0, 300)
 }
 
-# This function keeps the robot inside the black-lined border of the arena
+# -- Keeps the robot iniside of the black border --
 def stay_within_bounds():
     if color_sensor.color() == Color.BLACK:
-        robot.stop()            # Stop if black line is detected (arena boundary)
-        robot.straight(-50)     # Move backward slightly
-        robot.turn(90)          # Turn to stay within the boundary
+        # Stops when it is at the black line
+        robot.stop()     
+        # Goes back       
+        robot.straight(-50) 
+        # Turns to then start the alogrithm again   
+        robot.turn(90)         
 
-# This function helps the robot avoid obstacles using the ultrasonic sensor
+# -- Code for the robot to avoid obstacles --
 def avoid_obstacles():
-    if ultrasonic_sensor.distance() < 100:  # If an object is less than 10 cm away
+    # Senses an obstacle less than 10 cm
+    if ultrasonic_sensor.distance() < 100: 
         robot.stop()
-        robot.straight(-50)  # Back up
-        robot.turn(90)       # Turn to avoid the obstacle
+        # Goes back
+        robot.straight(-50)
+        # Turns to start the algorithm again 
+        robot.turn(90)       
 
-# This function drives the robot around to search for a red or yellow block
+# -- The code for the robot to search for the blocks --
 def find_block():
     while True:
-        stay_within_bounds()      # Ensure robot stays inside arena
-        avoid_obstacles()         # Check for and avoid obstacles
+        # Makes the robot stay inside of the border
+        stay_within_bounds()
+        # Makes the robot detect and stay away from obstacles      
+        avoid_obstacles()         
 
-        # Basic line-following behavior using reflected light
+        # Line following using the reflection of the light
         reflection = color_sensor.reflection()
         turn_rate = (50 - reflection) * 1.5
         robot.drive(100, turn_rate)
 
-        # Check if block is detected
+        # Firgures out if the clour is found
         color = color_sensor.color()
         if color in TARGET_COLORS:
             robot.stop()
-            return color  # Return the detected block color
-
-# This function operates the gripper to grab a block
+            # Gives the deteced block back
+            return color  
+        
+# -- Makes the gripper grab the block --
 def pick_up_block():
-    gripper_motor.run_angle(200, -90)  # Open gripper
+    # Opens the grippere
+    gripper_motor.run_angle(200, -90) 
     wait(500)
-    gripper_motor.run_angle(200, 180)  # Close gripper to pick up
+    # Closes the gripper to pick up the block
+    gripper_motor.run_angle(200, 180)  
     wait(500)
 
-# This function opens the gripper to release the block
+# -- Opens the gripper again to drop the block --
 def drop_block():
-    gripper_motor.run_angle(200, -180)  # Open to drop the block
+    # Where the gripper opens up
+    gripper_motor.run_angle(200, -180) 
     wait(500)
 
-# This function drives the robot to a specific coordinate (simplified logic)
+# -- Drives the robot to an unspecified location --
 def go_to_location(x, y):
-    robot.straight(x)  # Move forward x mm
-    robot.turn(90)     # Turn 90 degrees
-    robot.straight(y)  # Move forward y mm
+    robot.straight(x)  
+    robot.turn(90)     
+    robot.straight(y)  
 
-# --- Main program starts here ---
 
-# Wait until touch sensor is pressed before starting
+# -- Waits for the touch sensor to start --
 print("Press touch sensor to start.")
 while not touch_sensor.pressed():
     wait(10)
 
-# Repeat twice to collect both red and yellow blocks
+# -- A nested loop for the code to run effeciently --
 for _ in range(2):
-    color = find_block()          # Locate a block and get its color
-    pick_up_block()              # Grab the block
-    x, y = DROP_OFF_LOCATIONS[color]  # Get drop-off coordinates
-    go_to_location(x, y)         # Move to the location
-    drop_block()                 # Release the block
-    robot.straight(-100)         # Reverse before searching again
+    # Finds a block
+    color = find_block()
+    # Picks up the block
+    pick_up_block()  
+    # finds the dropping zone            
+    x, y = DROP_OFF_LOCATIONS[color] 
+    # Goes to the dropping zone
+    go_to_location(x, y)
+    # Drops the block in the dropping zone       
+    drop_block()              
+    robot.straight(-100)    
